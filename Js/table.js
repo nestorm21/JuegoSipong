@@ -9,16 +9,30 @@ class Table {
     this.canvas.style.position = 'absolute';
     this.canvas.style.top = this.y + 'px';
     this.canvas.style.left = this.x + 'px';
+    this.ctx = this.canvas.getContext('2d');
     document.body.appendChild(this.canvas);
     this.score = [0, 0];
   }
 
   drawTable() {
-    this.ctx = this.canvas.getContext('2d');
     this.ctx.fillStyle = 'black';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.fillStyle = 'white';
-    this.ctx.fillRect(this.canvas.width / 2 - 5, 0, 10, this.canvas.height);
+    this.ctx.setLineDash([10, 10]);
+    this.drawMiddleLine();
+    this.drawScoreBoard();
+  }
+
+  drawMiddleLine() {
+    this.ctx.strokeStyle = 'white';
+    this.ctx.lineWidth = 8;
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.canvas.width / 2 - 5, 0);
+    this.ctx.lineTo(this.canvas.width / 2, this.canvas.height);
+    this.ctx.stroke();
+  }
+
+  drawScoreBoard() {
     this.ctx.font = '30px Arial';
     this.ctx.fillText(this.score[0], this.canvas.width / 2 - 40, 30);
     this.ctx.fillText(this.score[1], this.canvas.width / 2 + 20, 30);

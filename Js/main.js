@@ -2,24 +2,35 @@ var player1;
 var player2;
 var ball;
 var table;
+var simon;
 var loop;
-var keysPressed = new Map([]);
-var collisioning = new Map([]);
 var gamePaused = false;
+var simonSays = false;
+var simonStarted = false;
 var timePaused = 3;
-var initialBallSpeed = 4;
+
+const keysPressed = new Map([]);
+const collisioning = new Map([]);
+collisioning.set('middle', true);
+const initialBallSpeed = 4;
+const maxBallSpeed = 20;
+const playerSpeed = 5;
+const playerHeight = 150;
+const playerWidth = 20;
 const beep = new Audio('Sounds/beep.ogg');
 beep.volume = 1;
 beep.playbackRate = 3;
 
+const finishSimon = () => {
+  simonSays = false;
+  simonStarted = false;
+}
+
 const initializeGame = () => {
-  const playerSpeed = 5;
-  const playerHeight = 150;
-  const playerWidth = 20;
   table = new Table({
     id: 'table',
-    width: 1000,
-    height: 500,
+    width: window.innerWidth,
+    height: window.innerHeight,
     x: 0,
     y: 0,
   });
@@ -45,6 +56,7 @@ const initializeGame = () => {
     vSpeed: 1,
     hSpeed: initialBallSpeed,
   });
+  simon = new Simon(document.body, finishSimon);
   window.addEventListener('keydown', (e) => {
     keysPressed.set(e.code, true);
   });
@@ -56,15 +68,18 @@ const initializeGame = () => {
 
 const gameLoop = () => {
   table.drawTable();
-  if (!gamePaused) {
+  if (!gamePaused && !simonSays) {
     checkMoves();
     moveBall();
-  }
-  console.log(ball.hSpeed);
+  } 
   player1.drawPlayer();
   player2.drawPlayer();
   ball.drawBall();
-  if (gamePaused) {
+  if (simonSays && !simonStarted) {
+    simonStarted = true;
+    simon.start();
+  }
+  else if (gamePaused) {
     table.drawTimer(timePaused);
   }
   loop = requestAnimationFrame(gameLoop);
@@ -86,13 +101,20 @@ checkMoves = () => {
 };
 
 moveBall = () => {
+  if (ball.x < (table.canvas.width / 2) + 10 &&
+    ball.x + ball.width > table.canvas.width / 2) {
+    !collisioning.get('middle') && (simonSays = true);
+    collisioning.set('middle', true);
+  } else {
+    collisioning.set('middle', false);
+  }
   if (
     ball.x < player2.x + player2.width &&
     ball.x + ball.width > player2.x &&
     ball.y < player2.y + player2.height &&
     ball.y + ball.height > player2.y
   ) {
-    !collisioning.get('player2') && (ball.hSpeed *= -1.05);
+    !collisioning.get('player2') && (ball.hSpeed = Math.abs(ball.hSpeed) >= maxBallSpeed ? maxBallSpeed : ball.hSpeed * -1.05);
     !collisioning.get('player2') && beep.play();
     collisioning.set('player2', true);
   } else {
@@ -104,7 +126,7 @@ moveBall = () => {
     player1.y < ball.y + ball.height &&
     player1.y + player1.height > ball.y
   ) {
-    !collisioning.get('player1') && (ball.hSpeed *= -1.05);
+    !collisioning.get('player1') && (ball.hSpeed = Math.abs(ball.hSpeed) >= maxBallSpeed ? maxBallSpeed : ball.hSpeed * -1.05);
     !collisioning.get('player1') && beep.play();
     collisioning.set('player1', true);
   } else {
@@ -117,6 +139,8 @@ moveBall = () => {
     table.score[0] += 1;
     ball.x = table.canvas.width / 2;
     gamePaused = true;
+    collisioning.set('middle', true);
+    simon.max = 1;
     const timeout = setInterval(() => {
       timePaused -= 1;
       if (timePaused === 0) {
@@ -131,6 +155,8 @@ moveBall = () => {
     table.score[1] += 1;
     ball.x = table.canvas.width / 2;
     gamePaused = true;
+    collisioning.set('middle', true);
+    simon.max = 1;
     const timeout = setInterval(() => {
       timePaused -= 1;
       if (timePaused === 0) {
@@ -143,6 +169,7 @@ moveBall = () => {
   }
   ball.moveBall();
 };
+
 
 initializeGame();
 gameLoop();
